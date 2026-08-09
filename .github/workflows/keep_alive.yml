@@ -1,32 +1,44 @@
-name: Wake Up Hugging Face n8n
+name: Wake Up Hugging Face Spaces
 
 on:
   schedule:
-    # Runs every 30 minutes to keep your Space active
+    # Runs every 30 minutes to keep all Spaces active
     - cron: '*/30 * * * *'
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
 jobs:
-  wake-space:
+  wake-spaces:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Wake API Request to Hugging Face
+      - name: Wake Up All Hugging Face Spaces
         run: |
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-            "https://huggingface.co/api/spaces/AliiiS/24-7_n8n/restart" \
-            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}")
-          
-          echo "Hugging Face API Response Code: $RESPONSE"
-          if [ "$RESPONSE" -eq 200 ] || [ "$RESPONSE" -eq 201 ]; then
-            echo "Successfully sent wake signal to Space!"
-          else
-            echo "Failed to contact HF API. Status: $RESPONSE"
-            exit 1
-          fi
+          # Add or remove any Hugging Face Space repository IDs here
+          SPACES=(
+            "AliiiS/24-7_n8n"
+            "AliiiS/pdf-to-image-api"
+            "AliiiS/hugging-claw"
+          )
 
-      - name: Wait 60s for container boot
+          for SPACE in "${SPACES[@]}"; do
+            echo "----------------------------------------"
+            echo "Sending wake/restart signal to: $SPACE"
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+              "https://huggingface.co/api/spaces/$SPACE/restart" \
+              -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}")
+            
+            echo "Response status for $SPACE: $RESPONSE"
+            if [ "$RESPONSE" -eq 200 ] || [ "$RESPONSE" -eq 201 ]; then
+              echo "Successfully signaled $SPACE!"
+            else
+              echo "Failed to contact API for $SPACE. Status: $RESPONSE"
+            fi
+          done
+
+      - name: Wait 60s for containers to boot
         run: sleep 60
 
-      - name: Ping n8n Health Endpoint
+      - name: Ping All Space Web Endpoints
         run: |
           curl -s -L "https://aliiis-24-7-n8n.hf.space/healthz" || true
+          curl -s -L "https://aliis-pdf-to-image-api.hf.space" || true
+          curl -s -L "https://aliis-hugging-claw.hf.space" || true
