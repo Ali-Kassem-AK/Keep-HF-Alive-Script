@@ -1,0 +1,32 @@
+name: Wake Up Hugging Face n8n
+
+on:
+  schedule:
+    # Runs every 30 minutes to keep your Space active
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  wake-space:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Wake API Request to Hugging Face
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "https://huggingface.co/api/spaces/AliiiS/N8n/restart" \
+            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}")
+          
+          echo "Hugging Face API Response Code: $RESPONSE"
+          if [ "$RESPONSE" -eq 200 ] || [ "$RESPONSE" -eq 201 ]; then
+            echo "Successfully sent wake signal to Space!"
+          else
+            echo "Failed to contact HF API. Status: $RESPONSE"
+            exit 1
+          fi
+
+      - name: Wait 60s for container boot
+        run: sleep 60
+
+      - name: Ping n8n Health Endpoint
+        run: |
+          curl -s -L "https://aliiis-24-7-n8n.hf.space/healthz" || true
