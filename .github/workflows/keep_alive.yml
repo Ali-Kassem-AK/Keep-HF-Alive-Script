@@ -13,7 +13,7 @@ jobs:
       - name: Send Wake API Request to Hugging Face
         run: |
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-            "https://huggingface.co/api/spaces/AliiiS/24-7-n8n/restart" \
+            "https://huggingface.co/api/spaces/AliiiS/24-7_n8n/restart" \
             -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}")
           
           echo "Hugging Face API Response Code: $RESPONSE"
